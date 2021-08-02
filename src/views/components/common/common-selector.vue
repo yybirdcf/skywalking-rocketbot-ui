@@ -97,7 +97,7 @@ limitations under the License. -->
     }
   }
   .rk-common-bar-i-text {
-    max-width: 150px;
+    max-width: 250px;
     min-width: 80px;
   }
   .rk-common-bar-i {
