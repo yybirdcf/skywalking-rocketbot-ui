@@ -131,7 +131,15 @@ const actions: ActionTree<State, any> = {
       .query('queryServices')
       .params(params)
       .then((res: AxiosResponse) => {
-        context.commit(types.SET_SERVICES, res.data.data.services);
+        var kvs = new Array();
+        var services = new Array();
+        res.data.data.services.forEach(function(e){  
+            if(!kvs[e.key]) {
+              kvs[e.key] = 1
+              services.push(e)
+            }
+        });
+        context.commit(types.SET_SERVICES, services);
       });
   },
   GET_INSTANCES(context: { commit: Commit }, params: any): Promise<void> {
