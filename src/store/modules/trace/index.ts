@@ -133,7 +133,7 @@ const actions: ActionTree<State, any> = {
       .then((res: AxiosResponse) => {
         var kvs = new Array();
         var services = new Array();
-        res.data.data.services.forEach(function(e){  
+        res.data.data.services.forEach(function(e: any){  
             if(!kvs[e.key]) {
               kvs[e.key] = 1
               services.push(e)
