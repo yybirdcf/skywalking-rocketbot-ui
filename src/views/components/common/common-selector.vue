@@ -15,6 +15,7 @@ limitations under the License. -->
 <template>
   <div
     class="rk-common-select cp flex-h"
+    style="flex:1"
     v-clickout="
       () => {
         visible = false;
