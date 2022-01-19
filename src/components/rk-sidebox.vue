@@ -35,7 +35,9 @@ limitations under the License. -->
   export default {
     name: 'RkSidebox',
     props: {
-      show: {},
+      show: {
+        default: false,
+      },
       title: {
         default: '',
       },
@@ -80,12 +82,12 @@ limitations under the License. -->
     position: fixed;
     right: 0;
     top: 50px;
-    bottom: 30px;
+    bottom: 0;
     z-index: 200;
     background-color: #fff;
   }
   .rk-sidebox-inner {
-    padding: 20px;
+    padding: 0 20px;
   }
   .rk-sidebox-inner-fixed {
     height: 100%;
@@ -103,7 +105,7 @@ limitations under the License. -->
     right: 10px;
     top: 0;
     cursor: pointer;
-    color: #d8d8d8;
+    color: #666;
     transition: color 0.3s;
     .icon {
       width: 18px;

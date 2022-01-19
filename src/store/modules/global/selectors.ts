@@ -37,6 +37,8 @@ export interface State {
   destService: Option;
   destInstance: Option;
   destEndpoint: Option;
+  selectorErrors: { [key: string]: string };
+  currentDependencyEndpoint: Option;
 }
 
 const initState: State = {
@@ -53,6 +55,8 @@ const initState: State = {
   destService: { key: '', label: '' },
   destInstance: { key: '', label: '' },
   destEndpoint: { key: '', label: '' },
+  selectorErrors: {},
+  currentDependencyEndpoint: { key: '', label: '' },
 };
 
 // mutations
@@ -79,13 +83,18 @@ const mutations: MutationTree<State> = {
     state.endpoints = pageTypes.includes(state.pageType) ? [{ label: 'All', key: '' }, ...data] : data;
     if (!state.endpoints.length) {
       state.currentEndpoint = { key: '', label: '' };
+      state.currentDependencyEndpoint = { key: '', label: '' };
       return;
     }
     state.currentEndpoint = state.endpoints[0];
+    state.currentDependencyEndpoint = state.endpoints[0];
   },
   [types.SET_CURRENT_ENDPOINT](state: State, endpoint: Option) {
     state.currentEndpoint = endpoint;
     state.updateDashboard = endpoint;
+  },
+  [types.SET_CURRENT_DEPENDENCY_ENDPOINT](state: State, endpoint: Option) {
+    state.currentDependencyEndpoint = endpoint;
   },
   [types.SET_INSTANCES](state: State, data: Option[]) {
     const pageTypes = [PageTypes.LOG, PageTypes.EVENT] as string[];
@@ -134,6 +143,12 @@ const mutations: MutationTree<State> = {
     state.destEndpoint = { key: call.destEndpointId, label: call.destEndpointName };
     state.updateDashboard = { key: TopologyType.TOPOLOGY_ENDPOINT_DEPENDENCY + call.id };
   },
+  [types.SET_SELECTOR_ERRORS](state: State, data: { msg: string; desc: string }) {
+    state.selectorErrors = {
+      ...state.selectorErrors,
+      [data.msg]: data.desc,
+    };
+  },
 };
 
 // actions
@@ -146,6 +161,12 @@ const actions: ActionTree<State, any> = {
       .query('queryServices')
       .params(params)
       .then((res: AxiosResponse) => {
+        context.commit(types.SET_SELECTOR_ERRORS, { msg: 'serviceErrors', desc: res.data.errors || '' });
+        if (res.data.errors) {
+          context.commit(types.SET_SERVICES, []);
+          return;
+        }
+
         var kvs = new Array();
         var services = new Array();
         res.data.data.services.forEach(function(e: any){  
@@ -175,6 +196,11 @@ const actions: ActionTree<State, any> = {
         keyword: params.keyword,
       })
       .then((res: AxiosResponse) => {
+        context.commit(types.SET_SELECTOR_ERRORS, { msg: 'endpointErrors', desc: res.data.errors || '' });
+        if (res.data.errors) {
+          context.commit(types.SET_ENDPOINTS, []);
+          return;
+        }
         context.commit(types.SET_ENDPOINTS, res.data.data.getEndpoints);
       });
   },
@@ -187,6 +213,11 @@ const actions: ActionTree<State, any> = {
       .query('queryInstances')
       .params({ serviceId: context.state.currentService.key || '', ...params })
       .then((res: AxiosResponse) => {
+        context.commit(types.SET_SELECTOR_ERRORS, { msg: 'instanceErrors', desc: res.data.errors || '' });
+        if (res.data.errors) {
+          context.commit(types.SET_INSTANCES, []);
+          return;
+        }
         context.commit(types.SET_INSTANCES, res.data.data.getServiceInstances);
       });
   },
@@ -195,6 +226,11 @@ const actions: ActionTree<State, any> = {
       .query('queryDatabases')
       .params(params)
       .then((res: AxiosResponse) => {
+        context.commit(types.SET_SELECTOR_ERRORS, { msg: 'databaseErrors', desc: res.data.errors || '' });
+        if (res.data.errors) {
+          context.commit(types.SET_DATABASES, []);
+          return;
+        }
         context.commit(types.SET_DATABASES, res.data.data.services);
       });
   },
@@ -210,7 +246,11 @@ const actions: ActionTree<State, any> = {
       params.callback({
         condition: {
           time: params.duration,
-          size: 20,
+          paging: {
+            pageNum: 1,
+            pageSize: 20,
+            needTotal: true,
+          },
           source: {
             service: params.service.label,
             endpoint: context.state.currentEndpoint.label,
@@ -230,7 +270,11 @@ const actions: ActionTree<State, any> = {
         .callback({
           condition: {
             time: params.duration,
-            size: 20,
+            paging: {
+              pageNum: 1,
+              pageSize: 20,
+              needTotal: true,
+            },
             source: {
               service: params.service.label,
               serviceInstance: context.state.currentInstance.label,
@@ -289,10 +333,17 @@ const actions: ActionTree<State, any> = {
       });
   },
   GET_ITEM_ENDPOINTS(context, params) {
+    if (!params.keyword) {
+      params.keyword = '';
+    }
     return graph
       .query('queryEndpoints')
       .params(params)
       .then((res: AxiosResponse) => {
+        context.commit(types.SET_SELECTOR_ERRORS, { msg: 'itemEndpointErrors', desc: res.data.errors || '' });
+        if (res.data.errors) {
+          return [];
+        }
         return res.data.data.getEndpoints;
       });
   },
@@ -301,6 +352,10 @@ const actions: ActionTree<State, any> = {
       .query('queryInstances')
       .params(params)
       .then((res: AxiosResponse) => {
+        context.commit(types.SET_SELECTOR_ERRORS, { msg: 'itemInstanceErrors', desc: res.data.errors || '' });
+        if (res.data.errors) {
+          return [];
+        }
         return res.data.data.getServiceInstances;
       });
   },
@@ -312,7 +367,11 @@ const actions: ActionTree<State, any> = {
       .query('queryServices')
       .params(params)
       .then((res: AxiosResponse) => {
-        return res.data.data.services || [];
+        context.commit(types.SET_SELECTOR_ERRORS, { msg: 'itemServiceErrors', desc: res.data.errors || '' });
+        if (res.data.errors) {
+          return [];
+        }
+        return res.data.data.services;
       });
   },
 };

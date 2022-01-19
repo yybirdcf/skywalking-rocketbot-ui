@@ -285,8 +285,8 @@ limitations under the License. -->
         <input
           type="text"
           class="rk-chart-edit-input long"
-          :value="itemConfig.tips"
-          @change="setItemConfig({ type: 'tips', value: $event.target.value })"
+          :value="decodeURIComponent(itemConfig.tipsContent)"
+          @change="setItemConfig({ type: 'tipsContent', value: encodeURIComponent($event.target.value) })"
         />
       </div>
     </div>
@@ -381,6 +381,10 @@ limitations under the License. -->
       if (this.isChartSlow && !this.itemConfig.maxItemNum) {
         this.itemConfig.maxItemNum = MaxItemNum;
       }
+      if (!this.itemConfig.tipsContent && this.itemConfig.tips) {
+        this.itemConfig.tipsContent = encodeURIComponent(this.itemConfig.tips);
+        this.setItemConfig({ type: 'tipsContent', value: this.itemConfig.tipsContent });
+      }
       this.hasChartType();
     }
 
@@ -409,7 +413,7 @@ limitations under the License. -->
     private setItemConfig(params: { type: string; value: string }) {
       this.itemConfig[params.type] = params.value;
       const types = ['endpointsKey', 'instancesKey', 'currentService'];
-      const typesUpdate = ['title', 'width', 'height', 'unit', 'tips'];
+      const typesUpdate = ['title', 'width', 'height', 'unit', 'tipsContent'];
       if (params.type === 'servicesKey') {
         this.setItemServices(true);
       }
@@ -417,6 +421,9 @@ limitations under the License. -->
         this.getServiceObject(true);
       }
       if (typesUpdate.includes(params.type)) {
+        if (params.type === 'tipsContent') {
+          this.EDIT_COMP_CONFIG({ index: this.index, values: { tips: decodeURIComponent(params.value) } });
+        }
         this.$emit('updateStatus', params.type, params.value);
       }
       if (params.type === 'entityType') {
@@ -480,9 +487,13 @@ limitations under the License. -->
           return;
         }
         if (data.length > 1) {
-          const length = data.filter((d: { typeOfMetrics: string }) => d.typeOfMetrics !== MetricsType.REGULAR_VALUE)
-            .length;
-          if (length) {
+          let len = 0;
+          for (const d of data) {
+            if (d.typeOfMetrics !== MetricsType.REGULAR_VALUE) {
+              len++;
+            }
+          }
+          if (len) {
             this.$emit('updateStatus', 'metricType', MetricsType.UNKNOWN);
             return;
           }

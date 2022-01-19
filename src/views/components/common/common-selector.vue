@@ -38,8 +38,21 @@ limitations under the License. -->
     </div>
     <div class="rk-common-sel" v-if="visible">
       <div v-if="hasSearch">
-        <input type="text" class="rk-common-sel-search" v-model="search" placeholder="Search..." />
-        <svg class="icon sm close" @click="search = ''" v-if="search">
+        <input
+          type="text"
+          class="rk-common-sel-search"
+          v-model="search"
+          @change="fliterSearch"
+          placeholder="Search..."
+        />
+        <svg
+          class="icon sm close"
+          @click="
+            search = '';
+            fliterSearch();
+          "
+          v-if="search"
+        >
           <use xlink:href="#clear"></use>
         </svg>
       </div>
@@ -48,8 +61,8 @@ limitations under the License. -->
           class="rk-common-opt ell"
           @click="handleSelect(i)"
           :class="{ active: i.key === value.key }"
-          v-for="i in filterData"
-          :key="i.key"
+          v-for="(i, idx) in filterData"
+          :key="idx"
         >
           {{ i.label || '' }}
         </div>
@@ -74,12 +87,16 @@ limitations under the License. -->
     get filterData() {
       return this.data.filter((i: any) => i.label.toUpperCase().indexOf(this.search.toUpperCase()) !== -1);
     }
-    public handleOpen() {
+    private handleOpen() {
       this.visible = true;
     }
-    public handleSelect(i: any) {
+    private handleSelect(i: any) {
       this.$emit('input', i);
       this.visible = false;
+    }
+
+    private fliterSearch() {
+      this.$emit('search', this.search);
     }
   }
 </script>
@@ -108,7 +125,7 @@ limitations under the License. -->
   }
   .rk-common-sel {
     position: absolute;
-    top: 50px;
+    top: 52px;
     box-shadow: 0 1px 6px rgba(99, 99, 99, 0.2);
     background-color: #252a2f;
     width: 100%;

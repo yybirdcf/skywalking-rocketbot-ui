@@ -41,8 +41,24 @@ limitations under the License. -->
           :value="service"
           @input="chooseService"
           :data="rocketTrace.services"
+          icon="package"
         />
-        <CommonSelector :hasSearch="true" :title="$t('instance')" v-model="instance" :data="rocketTrace.instances" />
+        <CommonSelector
+          :hasSearch="true"
+          :title="$t('instance')"
+          v-model="instance"
+          :data="rocketTrace.instances"
+          icon="disk"
+        />
+        <CommonSelector
+          :hasSearch="true"
+          :title="$t('endpoint')"
+          :value="endpoint"
+          @input="chooseEndpoint"
+          @search="searchEndpoint"
+          :data="rocketTrace.endpoints"
+          icon="code"
+        />
         <CommonSelector
           :title="$t('status')"
           :value="traceState"
@@ -52,14 +68,7 @@ limitations under the License. -->
             { label: 'Success', key: 'SUCCESS' },
             { label: 'Error', key: 'ERROR' },
           ]"
-        />
-        <CommonSelector
-          :hasSearch="true"
-          :title="$t('endpointName')"
-          :value="endpoint"
-          @input="chooseEndpoint"
-          @search="searchEndpoint"
-          :data="rocketTrace.endpoints"
+          icon="epic"
         />
       </div>
     </div>
@@ -95,6 +104,7 @@ limitations under the License. -->
   import { State as traceState } from '@/store/modules/trace/index';
   import { State as globalState } from '@/store/modules/global/index';
   import dateFormatStep from '@/utils/dateFormat';
+  import getLocalTime from '@/utils/localtime';
   @Component({ components: { CommonSelector, ConditionTags } })
   export default class TraceSearch extends Vue {
     @State('rocketbot') private rocketbotGlobal!: globalState;
@@ -123,19 +133,34 @@ limitations under the License. -->
     private tagsMap: Array<{ key: string; value: string }> = [];
     private tagsList: string[] = [];
     private clearTags: boolean = false;
+    private serviceName: string = '';
 
     private created() {
       this.traceId = this.$route.query.traceid ? this.$route.query.traceid.toString() : this.traceId;
+      this.serviceName = this.$route.query.service ? this.$route.query.service.toString() : this.serviceName;
       this.time = [this.rocketbotGlobal.durationRow.start, this.rocketbotGlobal.durationRow.end];
     }
     private mounted() {
-      this.getTraceList();
-      if (this.service && this.service.key) {
-        this.GET_INSTANCES({
-          duration: this.durationTime,
-          serviceId: this.service.key,
-        });
-      }
+      this.GET_SERVICES({ duration: this.durationTime }).then(() => {
+        if (this.serviceName) {
+          for (const s of this.rocketTrace.services) {
+            if (s.label === this.serviceName) {
+              this.service = s;
+              break;
+            }
+          }
+        }
+        this.getTraceList();
+        if (this.service && this.service.key) {
+          this.getInstance();
+        }
+      });
+    }
+    private getInstance(serviceId?: string) {
+      this.GET_INSTANCES({
+        duration: this.durationTime,
+        serviceId: serviceId || this.service.key,
+      });
     }
     private globalTimeFormat(time: Date[]) {
       const step = 'SECOND';
@@ -158,18 +183,17 @@ limitations under the License. -->
         this.SET_ENDPOINTS([]);
         return;
       }
-      this.GET_INSTANCES({ duration: this.durationTime, serviceId: i.key });
+      this.getInstance(i.key);
       this.SET_ENDPOINTS([]);
-      this.GET_ITEM_ENDPOINTS({
-        serviceId: i.key,
-        keyword: '',
-        duration: this.durationTime,
-      });
+      this.getItemEndpoints(i.key, '');
     }
     private searchEndpoint(search: string) {
+      this.getItemEndpoints(this.service.key, search);
+    }
+    private getItemEndpoints(serviceId: string, keyword?: string) {
       this.GET_ITEM_ENDPOINTS({
-        serviceId: this.service.key,
-        keyword: search,
+        serviceId,
+        keyword,
         duration: this.durationTime,
       });
     }
@@ -184,17 +208,10 @@ limitations under the License. -->
       this.tagsMap = data.tagsMap;
     }
     private getTraceList() {
-      this.GET_SERVICES({ duration: this.durationTime });
       const temp: any = {
         queryDuration: this.globalTimeFormat([
-          new Date(
-            this.time[0].getTime() +
-              (parseInt(String(this.rocketbotGlobal.utc), 10) + new Date().getTimezoneOffset() / 60) * 3600000,
-          ),
-          new Date(
-            this.time[1].getTime() +
-              (parseInt(String(this.rocketbotGlobal.utc), 10) + new Date().getTimezoneOffset() / 60) * 3600000,
-          ),
+          getLocalTime(this.rocketbotGlobal.utc, this.time[0]),
+          getLocalTime(this.rocketbotGlobal.utc, this.time[1]),
         ]),
         traceState: this.traceState.key,
         paging: { pageNum: 1, pageSize: 15, needTotal: true },
@@ -215,7 +232,7 @@ limitations under the License. -->
         localStorage.setItem('minTraceDuration', this.minTraceDuration);
       }
       if (this.endpoint.key) {
-        temp.endpointName = this.endpoint.label;
+        temp.endpointId = this.endpoint.key;
       }
       if (this.traceId) {
         temp.traceId = this.traceId;
@@ -248,6 +265,7 @@ limitations under the License. -->
       localStorage.removeItem('traceId');
       this.traceState = { label: 'All', key: 'ALL' };
       this.SET_TRACE_FORM_ITEM({ type: 'queryOrder', data: '' });
+      this.GET_SERVICES({ duration: this.durationTime });
       this.getTraceList();
     }
 

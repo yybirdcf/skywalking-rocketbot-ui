@@ -13,10 +13,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License. -->
 <template>
-  <div class="flex-h">
+  <div class="flex-h" :class="{ light: theme === 'light' }">
     <div class="mr-10 pt-5">
-      <span class="sm grey">{{ $t('tags') }}: </span>
-      <span class="rk-trace-tags">
+      <span class="sm grey" v-show="theme === 'dark'">{{ $t('tags') }}: </span>
+      <span class="rk-trace-tags" :style="type === 'LOG' ? `min-width: 122px;` : ''">
         <span class="selected" v-for="(item, index) in tagsList" :key="index">
           <span>{{ item }}</span>
           <span class="remove-icon" @click="removeTags(index)">×</span>
@@ -31,6 +31,7 @@ limitations under the License. -->
           {{ $t('tagsLink') }}
         </a>
         <rk-icon icon="help" class="mr-5" />
+        <b v-if="type === 'TRACE'">{{ $t('noticeTag') }}</b>
       </span>
     </div>
   </div>
@@ -41,6 +42,7 @@ limitations under the License. -->
   export default class ConditionTags extends Vue {
     @Prop() private type!: string;
     @Prop() private clearTags!: boolean;
+    @Prop({ default: 'dark' }) private theme!: string;
     private tagsList: string[] = [];
     private tags: string = '';
 
@@ -118,7 +120,7 @@ limitations under the License. -->
     outline: 0;
     padding: 2px 5px;
     border-radius: 3px;
-    width: 175px;
+    width: 250px;
     margin-right: 3px;
   }
   .remove-icon {
@@ -128,5 +130,17 @@ limitations under the License. -->
   }
   .tags-tip {
     color: #a7aebb;
+  }
+  .light {
+    color: #3d444f;
+    input {
+      border: 1px solid #ccc;
+    }
+    .selected {
+      color: #3d444f;
+    }
+  }
+  b {
+    color: #fff;
   }
 </style>

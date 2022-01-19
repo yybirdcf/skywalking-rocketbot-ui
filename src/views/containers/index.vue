@@ -14,28 +14,22 @@ See the License for the specific language governing permissions and
 limitations under the License. -->
 <template>
   <div id="app">
-    <RkHeader @reloadFooter="reloadFooter" />
+    <RkHeader />
     <router-view></router-view>
-    <RkFooter ref="footer" />
+    <AlertsContent />
   </div>
 </template>
 
 <script lang="ts">
   import { Component, Vue } from 'vue-property-decorator';
-  import RkHeader from '@/components/rk-header.vue';
-  import RkFooter from '@/components/rk-footer.vue';
+  import RkHeader from '@/views/components/common/rk-header.vue';
+  import AlertsContent from '@/views/components/common/alerts-content.vue';
 
   @Component({
     components: {
       RkHeader,
-      RkFooter,
+      AlertsContent,
     },
   })
-  export default class RouterIndex extends Vue {
-    private isRouterAlive: boolean = true;
-    public reloadFooter(timeArray: Date[]): void {
-      const footer: any = this.$refs.footer;
-      footer.time = timeArray;
-    }
-  }
+  export default class RouterIndex extends Vue {}
 </script>

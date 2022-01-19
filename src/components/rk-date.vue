@@ -85,7 +85,6 @@ limitations under the License. -->
 
 <script lang="js">
   import RkCalendar from './rk-date-calendar.vue';
-  import getLocalTime from '@/utils/localtime';
   /* eslint-disable */
   /* tslint:disable */
   export default {
@@ -368,7 +367,6 @@ limitations under the License. -->
   }
 
   .datepicker-popup {
-    // right: 0px;
     border-radius: 4px;
     position: absolute;
     transition: all 200ms ease;
@@ -393,12 +391,11 @@ limitations under the License. -->
       transform-origin: center top;
     }
     &.left {
-      left: -80px;
       top: 30px;
       transform-origin: center top;
     }
     &.right {
-      right: 0;
+      right: -80px;
       top: 30px;
       transform-origin: center top;
     }
@@ -439,7 +436,7 @@ limitations under the License. -->
   }
 
   .datepicker-range {
-    min-width: 280px;
+    min-width: 238px;
   }
 
   .datepicker-range .datepicker-popup {

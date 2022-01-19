@@ -35,8 +35,10 @@ export const ProfileSegment = {
         key value
       }
       logs {
-        time data {
-            key value
+        time
+        data {
+          key
+          value
         }
       }
     }
@@ -105,6 +107,18 @@ export const GetProfileAnalyze = {
         count
       }
     }
+  }
+  `,
+};
+export const GetProfileTaskLogs = {
+  variable: '$taskID: String',
+  query: `
+  getProfileTaskLogs: getProfileTaskLogs(taskID: $taskID) {
+    id
+    instanceId
+    instanceName
+    operationTime
+    operationType
   }
   `,
 };
